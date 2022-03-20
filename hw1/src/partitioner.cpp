@@ -73,11 +73,10 @@ inline bool
 Partitioner::isBalanced(Node *swpNode) 
 {
     Cell* swpCell = _cellArray[swpNode->getId()];
-    double lowerBound = (1.0-getBFactor()) / 2.0 * (double)getCellNum();
-    double upperBound = (1.0+getBFactor()) / 2.0 * (double)getCellNum();
     int sizeOfF = _partSize[swpCell->getPart()] - 1;
     int sizeOfT = _partSize[!swpCell->getPart()] + 1;
-    return (((double)sizeOfF>=lowerBound) && ((double)sizeOfF<=upperBound)) && (((double)sizeOfT>=lowerBound)&&((double)sizeOfT<=upperBound));
+    return (((double)sizeOfF>=_lowerBound) && ((double)sizeOfF<=_upperBound)) &&
+            (((double)sizeOfT>=_lowerBound) && ((double)sizeOfT<=_upperBound));
 }
 
 inline void 
@@ -177,6 +176,7 @@ Partitioner::getSwapCell()
             return _cellArray[node->getId()];
         } 
     }
+
     return NULL;
 }
 
@@ -252,6 +252,7 @@ Partitioner::updateCellGain(Cell* swpCell)
             }
         }
     }
+
     return;
 }
 
@@ -306,6 +307,10 @@ void Partitioner::moveCellPerIter()
 
 void Partitioner::partition()
 {
+
+    _lowerBound = (1.0-getBFactor()) / 2.0 * (double)getCellNum();
+    _upperBound = (1.0+getBFactor()) / 2.0 * (double)getCellNum();
+
     initialPartition();
     //reportBucket();
     cout << "initial _cutSize: " << _cutSize << endl;
@@ -343,6 +348,8 @@ void Partitioner::partition()
         //cout << "_bestMoveNum: " << _bestMoveNum << endl;
         moveCellPerIter();
         //reportBucket();
+        //cout << "_bList[3]: " << _cellArray[_bList[3]->getId()]->getName() << endl; 
+        //break;
 
     } while (_maxAccGain > 0);
 }
