@@ -58,6 +58,8 @@ private:
     int                 _maxPinNum;     // Pmax for building bucket list
     int                 _maxGain;
     double              _bFactor;       // the balance factor to be met
+    double              _lowerBound;    // lower bound of balance
+    double              _upperBound;    // upper bound of balance
     Node*               _maxGainCell;   // pointer to max gain cell
     vector<Net*>        _netArray;      // net array of the circuit
     vector<Cell*>       _cellArray;     // cell array of the circuit

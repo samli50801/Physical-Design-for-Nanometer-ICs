@@ -118,10 +118,6 @@ Partitioner::bucketEraseNode(Node* node, size_t key)
 void
 Partitioner::initialPartition() {
 
-    _bList.resize((_maxPinNum * 2) + 1);
-    for (auto& it : _bList)
-        it = NULL;
-
     /* initial partition */
     for (int i = 0; i < _cellNum; ++i) {
         bool side = i < _cellNum/2;
@@ -271,11 +267,16 @@ void Partitioner::moveCellPerIter()
 
     /* reset net's part */
     for (size_t i = 0; i < _cellNum; ++i) {
+
         bool part = _cellArray[i]->getPart();
+
         /* clean GAIN */
         _cellArray[i]->setGain(0);
+        /* unlock all cell */
+        _cellArray[i]->unlock();
         /* recalculate partSize */ 
         ++_partSize[part];
+
         vector<int>& netList = _cellArray[i]->getNetList();
         for (size_t j = 0, end_j = netList.size(); j < end_j; ++j) 
             _netArray[netList[j]]->incPartCount(part);
@@ -311,6 +312,9 @@ void Partitioner::partition()
     _lowerBound = (1.0-getBFactor()) / 2.0 * (double)getCellNum();
     _upperBound = (1.0+getBFactor()) / 2.0 * (double)getCellNum();
 
+    _bList.resize((_maxPinNum * 2) + 1);
+    for (auto& it : _bList) it = NULL;
+
     initialPartition();
     //reportBucket();
     cout << "initial _cutSize: " << _cutSize << endl;
@@ -322,10 +326,7 @@ void Partitioner::partition()
         _bestMoveNum = -1;
         _moveStack.clear();
 
-        for (size_t i = 0; i < _cellNum; ++i)
-            _cellArray[i]->unlock();
-
-        for (int i = 0; i < _cellNum; ++i) {
+        for (size_t i = 0; i < _cellNum; ++i) {
 
             Cell* swpCell = getSwapCell();
             _moveStack.push_back(swpCell);
