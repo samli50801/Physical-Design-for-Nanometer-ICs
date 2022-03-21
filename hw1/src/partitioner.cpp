@@ -15,6 +15,7 @@ using namespace std;
 #define R 1
 #define G2I(GAIN)  (GAIN+_maxPinNum)
 #define I2G(INDEX) (INDEX-_maxPinNum)
+#define FIFO_ON 0
 
 void Partitioner::parseInput(fstream& inFile)
 {
@@ -83,11 +84,22 @@ inline void
 Partitioner::bucketAddNode(Node* node, size_t key)
 {
     if (_bList[G2I(key)] != NULL) {
+
         Node *root_node = _bList[G2I(key)];
         Node *last_node = root_node->getPrev();
-        last_node->setNext(node);
-        node->setPrev(last_node);
-        root_node->setPrev(node);
+
+        #if FIFO_ON /* insert to the tail */
+            last_node->setNext(node);
+            node->setPrev(last_node);
+            root_node->setPrev(node);
+        #endif
+
+        #if !FIFO_ON /* insert to the head */
+            node->setPrev(last_node);
+            node->setNext(root_node);
+            root_node->setPrev(node);
+            _bList[G2I(key)] = node;
+        #endif
     } else {
         _bList[G2I(key)] = node;
         node->setPrev(node);
@@ -118,9 +130,11 @@ Partitioner::bucketEraseNode(Node* node, size_t key)
 void
 Partitioner::initialPartition() {
 
+    int threshold = _cellNum/2;
+
     /* initial partition */
     for (int i = 0; i < _cellNum; ++i) {
-        bool side = i < _cellNum/2;
+        bool side = i < threshold;
         _cellArray[i]->setPart(side);
         ++_partSize[side];
         vector<int>& netList = _cellArray[i]->getNetList();
@@ -195,9 +209,6 @@ Partitioner::updateCellGain(Cell* swpCell)
 {   
     bool swpPart = swpCell->getPart();
     vector<int>& netList = swpCell->getNetList();
-
-    // erase swap node from the bucket
-    bucketEraseNode(swpCell->getNode(), swpCell->getGain());
 
     for (size_t i = 0, i_end = netList.size(); i < i_end; ++i) {
         Net *net = _netArray[netList[i]];
@@ -303,7 +314,6 @@ void Partitioner::moveCellPerIter()
             bucketAddNode(cell->getNode(), cell->getGain());
         }
     }
-    
 }
 
 void Partitioner::partition()
@@ -332,6 +342,9 @@ void Partitioner::partition()
             _moveStack.push_back(swpCell);
             swpCell->lock();
 
+            /* erase swap node from the bucket */
+            bucketEraseNode(swpCell->getNode(), swpCell->getGain());
+
             --_partSize[swpCell->getPart()];
             ++_partSize[!swpCell->getPart()];
 
@@ -347,6 +360,7 @@ void Partitioner::partition()
         //cout << "final _accGain: " << _accGain << endl;
         //cout <<"_maxAccGain: " << _maxAccGain << endl;
         //cout << "_bestMoveNum: " << _bestMoveNum << endl;
+        assert(_accGain == 0);
         moveCellPerIter();
         //reportBucket();
         //cout << "_bList[3]: " << _cellArray[_bList[3]->getId()]->getName() << endl; 
