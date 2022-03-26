@@ -11,11 +11,11 @@
 #include "partitioner.h"
 using namespace std;
 
-#define L 0
-#define R 1
-#define G2I(GAIN)  (GAIN+_maxPinNum)
-#define I2G(INDEX) (INDEX-_maxPinNum)
-#define FIFO_ON 0
+#define L           0
+#define R           1
+#define FIFO_ON     0
+#define G2I(GAIN)   (GAIN+_maxPinNum)
+#define I2G(INDEX)  (INDEX-_maxPinNum)
 
 void Partitioner::parseInput(fstream& inFile)
 {
@@ -31,7 +31,6 @@ void Partitioner::parseInput(fstream& inFile)
             inFile >> netName;
             int netId = _netNum;
             _netArray.push_back(new Net(netName));
-            _netName2Id[netName] = netId;
             while (inFile >> cellName) {
                 if (cellName == ";") {
                     tmpCellName = "";
@@ -142,6 +141,7 @@ Partitioner::initialPartition() {
             _netArray[netList[j]]->incPartCount(side);
         }
     }
+
     /* initial gain */
     for (size_t i = 0; i < _netNum; ++i) {
 
@@ -168,7 +168,7 @@ Partitioner::initialPartition() {
 }
 
 Cell* 
-Partitioner::getSwapCell()
+Partitioner::getBestCell()
 {
     Node *node;
     for (int i = _bList.size()-1; i >= 0; --i) {
@@ -265,7 +265,6 @@ Partitioner::updateCellGain(Cell* swpCell)
 
 void Partitioner::moveCellPerIter()
 {
-    _cutSize -= _maxAccGain;
     _partSize[L] = 0;
     _partSize[R] = 0;
 
@@ -319,15 +318,14 @@ void Partitioner::moveCellPerIter()
 void Partitioner::partition()
 {
 
-    _lowerBound = (1.0-getBFactor()) / 2.0 * (double)getCellNum();
-    _upperBound = (1.0+getBFactor()) / 2.0 * (double)getCellNum();
+    _lowerBound = (1.0-getBFactor()) / 2.0 * (double)_cellNum;
+    _upperBound = (1.0+getBFactor()) / 2.0 * (double)_cellNum;
 
     _bList.resize((_maxPinNum * 2) + 1);
     for (auto& it : _bList) it = NULL;
 
     initialPartition();
-    //reportBucket();
-    cout << "initial _cutSize: " << _cutSize << endl;
+    _initCutSize = _cutSize;
 
     do {
 
@@ -338,7 +336,7 @@ void Partitioner::partition()
 
         for (size_t i = 0; i < _cellNum; ++i) {
 
-            Cell* swpCell = getSwapCell();
+            Cell* swpCell = getBestCell();
             _moveStack.push_back(swpCell);
             swpCell->lock();
 
@@ -355,36 +353,60 @@ void Partitioner::partition()
                 _maxAccGain = _accGain;
                 _bestMoveNum = i;
             }
-            //reportBucket();
         }
-        //cout << "final _accGain: " << _accGain << endl;
-        //cout <<"_maxAccGain: " << _maxAccGain << endl;
-        //cout << "_bestMoveNum: " << _bestMoveNum << endl;
-        assert(_accGain == 0);
+
+        assert(_accGain == 0);  // Debug
+        ++_iterNum;
+        _cutSize -= _maxAccGain;
         moveCellPerIter();
-        //reportBucket();
-        //cout << "_bList[3]: " << _cellArray[_bList[3]->getId()]->getName() << endl; 
-        //break;
 
     } while (_maxAccGain > 0);
+
+    //cout << _lowerBound << " <= " << _partSize[L] << " <= " << _upperBound << endl;
+    //cout << _lowerBound << " <= " << _partSize[R] << " <= " << _upperBound << endl;
+
+    bool correct = verifyAnswer();
+    if (correct) cout << "correct answer\n";
+    else cout << "wrong answer\n";
+}
+
+bool Partitioner::verifyAnswer() {
+    int final_cut_size = 0;
+    /*for (auto& it : _netArray) {
+        if (it->getPartCount(L) != 0 && it->getPartCount(R) != 0)
+            ++final_cut_size;
+    }
+    cout << "final_cut_size: " << final_cut_size << endl;
+    return final_cut_size == _cutSize ? true : false;*/
+
+    for (auto& it : _netArray) {
+        int l = 0, r = 0;
+        vector<int>& cellList = it->getCellList();
+        for (int i = 0, i_end = cellList.size(); i < i_end; ++i) {
+            if (_cellArray[cellList[i]]->getPart() == 0)
+                ++l;
+            else 
+                ++r;
+        }
+        if (l != 0 && r != 0)
+            ++final_cut_size;
+
+    }
+    cout << "final_cut_size: " << final_cut_size << endl;
+    return final_cut_size == _cutSize ? true : false;
 }
 
 void Partitioner::printSummary() const
 {
     cout << endl;
     cout << "==================== Summary ====================" << endl;
-    cout << " Cutsize: " << _cutSize << endl;
+    cout << " Initial Cut Size: " << _initCutSize << endl;
+    cout << " Final Cut Size: " << _cutSize << endl;
     cout << " Total cell number: " << _cellNum << endl;
     cout << " Total net number:  " << _netNum << endl;
     cout << " Cell Number of partition A: " << _partSize[L] << endl;
-    /*for (size_t i = 0; i < _cellNum; ++i) 
-        if (_cellArray[i]->getPart() == L)
-            cout << _cellArray[i]->getName() << " ";
-    cout << endl;*/
     cout << " Cell Number of partition B: " << _partSize[R] << endl;
-    /*for (size_t i = 0; i < _cellNum; ++i) 
-        if (_cellArray[i]->getPart() == R)
-            cout << _cellArray[i]->getName() << " ";*/
+    cout << " Total num of iteration: " << _iterNum << endl;
     cout << "=================================================" << endl;
     cout << endl;
     return;

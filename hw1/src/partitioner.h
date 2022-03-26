@@ -35,7 +35,7 @@ public:
     inline bool isBalanced(Node *swpNode);
     void parseInput(fstream& inFile);
     void initialPartition();
-    Cell* getSwapCell();
+    Cell* getBestCell();
     inline void bucketAddNode(Node* node, size_t key);
     inline void bucketEraseNode(Node* node, size_t key);
     void bucketUpdate(Cell*, int diff);
@@ -50,8 +50,12 @@ public:
     void reportBucket() const;
     void writeResult(fstream& outFile);
 
+    // DEBUG
+    bool verifyAnswer();
+
 private:
     int                 _cutSize;       // cut size
+    int                 _initCutSize;   // initial cut size
     int                 _partSize[2];   // size (cell number) of partition A(0) and B(1)
     int                 _netNum;        // number of nets
     int                 _cellNum;       // number of cells

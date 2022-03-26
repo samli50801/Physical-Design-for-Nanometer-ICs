@@ -27,7 +27,7 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    Partitioner* partitioner = new Partitioner(input);
+    Partitioner* partitioner = new Partitioner(input);  
     partitioner->partition();
     partitioner->printSummary();
     partitioner->writeResult(output);
