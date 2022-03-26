@@ -9,7 +9,7 @@ int main(int argc, char** argv)
     fstream input, output;
 
     if (argc == 3) {
-        input.open(argv[1], ios::in);
+        input.open("testcase/" + std::string(argv[1]), ios::in);
         output.open(argv[2], ios::out);
         if (!input) {
             cerr << "Cannot open the input file \"" << argv[1]

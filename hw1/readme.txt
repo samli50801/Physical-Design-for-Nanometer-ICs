@@ -7,7 +7,7 @@
 4. File:
 	(1) bin/: Executable file
 	(2) src/: Source code including .h and .cpp file
-	(3) input_#.dat: The input testcases
+	(3) testcase/: Input testcases
 	(4) Makefile: File for building program automatically
 	(5) readme.txt: The tutorial of this program
 	(6) report.pdf: Report the data structures used in your program and the findings in this programming

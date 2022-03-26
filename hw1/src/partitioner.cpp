@@ -365,9 +365,9 @@ void Partitioner::partition()
     //cout << _lowerBound << " <= " << _partSize[L] << " <= " << _upperBound << endl;
     //cout << _lowerBound << " <= " << _partSize[R] << " <= " << _upperBound << endl;
 
-    bool correct = verifyAnswer();
+    /*bool correct = verifyAnswer();
     if (correct) cout << "correct answer\n";
-    else cout << "wrong answer\n";
+    else cout << "wrong answer\n";*/
 }
 
 bool Partitioner::verifyAnswer() {
