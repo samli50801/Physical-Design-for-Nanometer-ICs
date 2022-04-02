@@ -9,13 +9,6 @@ using namespace std;
 
 void B_Tree::initialize()
 {
-    /*for (size_t i = 0, i_end = _blkArray.size(); i < i_end; ++i) {
-        _nodeArray[i]->_blk = _blkArray[i];
-        _nodeArray[i]->_l = _nodeArray[i]->_r = _nodeArray[i]->_p = NULL;
-    }
-    std::sort(_nodeArray.begin(), _nodeArray.end(), 
-        [](Node* a, Node* b) { return a->getArea() > b->getArea(); });*/
-
     /* initialize B* tree */
     queue<size_t> q;
     _root = _nodeArray[0];
@@ -51,41 +44,41 @@ Node* B_Tree::deleteNode(Node* delNode)
     /* delete */
     if (delNode->_l == NULL && delNode->_r == NULL) {         // delete leaf node
         if (delNode->_p->_l == delNode) {
-            _rec.push_front(Info(delNode->_p, Info::DEL_INS, NULL, Info::L, delNode->_p->_l));
+            _rec.push_front(Info(delNode->_p, DEL_INS, NULL, L, delNode->_p->_l));
             delNode->_p->_l = NULL;
         }
         else {
-            _rec.push_front(Info(delNode->_p, Info::DEL_INS, NULL, Info::R, delNode->_p->_r));
+            _rec.push_front(Info(delNode->_p, DEL_INS, NULL, R, delNode->_p->_r));
             delNode->_p->_r = NULL;
         }
-        _rec.push_front(Info(delNode, Info::DEL_INS, NULL, Info::P, delNode->_p));
+        _rec.push_front(Info(delNode, DEL_INS, NULL, P, delNode->_p));
         delNode->_p = NULL;
     } else if (delNode->_l == NULL || delNode->_r == NULL) {  // delete one child node
         Node *childOfDelete = (delNode->_l == NULL) ? delNode->_r : delNode->_l;
         if (delNode == _root) {
-            _rec.push_front(Info(_root, Info::ROOT, NULL, 0, NULL));
+            _rec.push_front(Info(_root, ROOT, NULL, 0, NULL));
             _root = childOfDelete;
         }
         else if (delNode->_p->_l == delNode) {
-            _rec.push_front(Info(delNode->_p, Info::DEL_INS, NULL, Info::L, delNode->_p->_l));
+            _rec.push_front(Info(delNode->_p, DEL_INS, NULL, L, delNode->_p->_l));
             delNode->_p->_l = childOfDelete;
         }
         else {
-            _rec.push_front(Info(delNode->_p, Info::DEL_INS, NULL, Info::R, delNode->_p->_r));
+            _rec.push_front(Info(delNode->_p, DEL_INS, NULL, R, delNode->_p->_r));
             delNode->_p->_r = childOfDelete;
         }
-        _rec.push_front(Info(childOfDelete, Info::DEL_INS, NULL, Info::P, childOfDelete->_p));
+        _rec.push_front(Info(childOfDelete, DEL_INS, NULL, P, childOfDelete->_p));
         childOfDelete->_p = delNode->_p;
-        _rec.push_front(Info(delNode, Info::DEL_INS, NULL, Info::P, delNode->_p));
+        _rec.push_front(Info(delNode, DEL_INS, NULL, P, delNode->_p));
+        _rec.push_front(Info(delNode, DEL_INS, NULL, L, delNode->_l));
+        _rec.push_front(Info(delNode, DEL_INS, NULL, R, delNode->_r));
         delNode->_p = NULL;
-        _rec.push_front(Info(delNode, Info::DEL_INS, NULL, Info::L, delNode->_l));
         delNode->_l = NULL;
-        _rec.push_front(Info(delNode, Info::DEL_INS, NULL, Info::R, delNode->_r));
         delNode->_r = NULL;
     } else {                                                   // delete two child node
         Node* replace = rand()%2 ? delNode->_r : delNode->_l;
-        _rec.push_front(Info(delNode, Info::SWAP, delNode->_blk));
-        _rec.push_front(Info(replace, Info::SWAP, replace->_blk));
+        _rec.push_front(Info(delNode, SWAP, delNode->_blk));
+        _rec.push_front(Info(replace, SWAP, replace->_blk));
         std::swap(delNode->_blk, replace->_blk);
         return deleteNode(replace);
     }
@@ -97,35 +90,35 @@ inline void B_Tree::insertNode(Node* node, Node* root)
     if (rand() % 2) {
         if (root->_l != NULL) {
             if (rand() % 2) {
-                _rec.push_front(Info(node, Info::DEL_INS, NULL, Info::L, node->_l));
+                _rec.push_front(Info(node, DEL_INS, NULL, L, node->_l));
                 node->_l = root->_l;
             }
             else {
-                _rec.push_front(Info(node, Info::DEL_INS, NULL, Info::R, node->_r));
+                _rec.push_front(Info(node, DEL_INS, NULL, R, node->_r));
                 node->_r = root->_l;
             }
-            _rec.push_front(Info(root->_l, Info::DEL_INS, NULL, Info::P, root->_l->_p));
+            _rec.push_front(Info(root->_l, DEL_INS, NULL, P, root->_l->_p));
             root->_l->_p = node;
         }
-        _rec.push_front(Info(root, Info::DEL_INS, NULL, Info::L, root->_l));
+        _rec.push_front(Info(root, DEL_INS, NULL, L, root->_l));
         root->_l = node;
     } else {
         if (root->_r != NULL) {
             if (rand() % 2) {
-                _rec.push_front(Info(node, Info::DEL_INS, NULL, Info::L, node->_l));
+                _rec.push_front(Info(node, DEL_INS, NULL, L, node->_l));
                 node->_l = root->_r;
             }
             else {
-                _rec.push_front(Info(node, Info::DEL_INS, NULL, Info::R, node->_r));
+                _rec.push_front(Info(node, DEL_INS, NULL, R, node->_r));
                 node->_r = root->_r;
             }
-            _rec.push_front(Info(root->_r, Info::DEL_INS, NULL, Info::P, root->_r->_p));
+            _rec.push_front(Info(root->_r, DEL_INS, NULL, P, root->_r->_p));
             root->_r->_p = node;
         }
-        _rec.push_front(Info(root, Info::DEL_INS, NULL, Info::R, root->_r));
+        _rec.push_front(Info(root, DEL_INS, NULL, R, root->_r));
         root->_r = node;
     }
-    _rec.push_front(Info(node, Info::DEL_INS, NULL, Info::P, node->_p));
+    _rec.push_front(Info(node, DEL_INS, NULL, P, node->_p));
     node->_p = root;
 }
 
@@ -137,34 +130,30 @@ void B_Tree::op_swap2nodes()
         node1 = _nodeArray[rand() % _nodeNum];
         node2 = _nodeArray[rand() % _nodeNum];
     } while (node1 == node2);
-    //cout << "SWAP: " << node1->_blk->getName() << " " << node2->_blk->getName() << endl;
-    _rec.push_front(Info(node1, Info::SWAP, node1->_blk));
-    _rec.push_front(Info(node2, Info::SWAP, node2->_blk));
+    _rec.push_front(Info(node1, SWAP, node1->_blk));
+    _rec.push_front(Info(node2, SWAP, node2->_blk));
     std::swap(node1->_blk, node2->_blk);
 }
 
 void B_Tree::op_rotate()
 {
     Node* node = _nodeArray[rand() % _nodeNum];
-    _rec.push_front(Info(NULL, Info::ROTATE, node->_blk, 0, NULL));
+    _rec.push_front(Info(NULL, ROTATE, node->_blk, 0, NULL));
     node->_blk->rotate();
 }
 
 void B_Tree::op_deleteAndInsert()
 {
     Node *delNode = deleteNode(_nodeArray[rand() % _nodeNum]);
-    //cout << "DELETE: " << delNode->getName() << endl;
     Node *insNode;
     do insNode = _nodeArray[rand() % _nodeNum]; while (insNode == delNode);
     insertNode(delNode, insNode);
-    //cout << "INSERT: " << insNode->getName() << endl;
 
 }
 
 int B_Tree::updateContourLine(Node* node)
 {
     int start = node->getx(), end = node->getx() + node->getWidth();
-    //assert(start>=0 && end<=_outlineW);
     int maxHeight = 0;
     Interval newIntv = {{start, end}, 0};
 
@@ -172,12 +161,10 @@ int B_Tree::updateContourLine(Node* node)
 
     for (list<Interval>::iterator i = _ctl.begin(); i != _ctl.end(); ++i) {
         Interval it = *i;
-        if (start < it.first.second && it.first.first < end) {
+        if (start < it.first.second && it.first.first < end)
             maxHeight = std::max(maxHeight, it.second);
-        }
-        if (start >= it.first.first && start < it.first.second) {
+        if (start >= it.first.first && start < it.first.second)
             p = i;
-        }
         if (end > it.first.first && end <= it.first.second) {
             q = ++i;
             break;
@@ -202,8 +189,7 @@ int B_Tree::updateContourLine(Node* node)
         //   -------it
         else if (start <= (*it).first.first && end < (*it).first.second) {
             (*it).first.first = end;
-            if (it == p)
-                _ctl.insert(it, newIntv);
+            if (it == p) _ctl.insert(it, newIntv);
         }
         //     -----  intv
         // -------it
@@ -225,7 +211,6 @@ int B_Tree::updateContourLine(Node* node)
         }
         ++it;
     }
-    //printContourLine();
     return maxHeight;
 }
 
@@ -269,18 +254,18 @@ void B_Tree::recover()
     while (!_rec.empty()) {
         Info it = _rec.front();
         switch (it._op) {
-        case Info::SWAP:
+        case SWAP:
             it._node->_blk = it._blk;
             break;
-        case Info::ROTATE:
+        case ROTATE:
             it._blk->rotate();
             break;
-        case Info::DEL_INS:
-            if (it._pntDir == Info::L) it._node->_l = it._pntNode; else
-            if (it._pntDir == Info::R) it._node->_r = it._pntNode; else
-            if (it._pntDir == Info::P) it._node->_p = it._pntNode;
+        case DEL_INS:
+            if (it._pntDir == L) it._node->_l = it._pntNode; else
+            if (it._pntDir == R) it._node->_r = it._pntNode; else
+            if (it._pntDir == P) it._node->_p = it._pntNode;
             break;
-        case Info::ROOT:
+        case ROOT:
             _root = it._node;
             break;
         }
@@ -317,7 +302,7 @@ void B_Tree::plotNode(fstream& outgraph, int& index) {
         int x0 = node->getx(), y0 = node->gety();
         int x1 = x0 + node->getWidth(), y1 = y0 + node->getHeight();
         outgraph << "set object " << index++ << " rect from " 
-		  		<< x0 << "," << y0 << " to " << x1 << "," << y1 << " fs empty border fc rgb 'green'\n";
+		  		<< x0 << "," << y0 << " to " << x1 << "," << y1 << " fs empty border fc rgb 'green'\n"
+                << "set label " << "\"" << node->getName() << "\"" << " at " << (x0+x1)/2.0 << "," << (y0+y1)/2.0 << " center " << "font \",8\" tc rgb \"white\"\n";
     }
 }
-

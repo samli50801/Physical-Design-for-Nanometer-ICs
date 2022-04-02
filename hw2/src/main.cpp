@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <bitset>
 #include "floorplanner.h"
 using namespace std;
 
@@ -36,9 +37,8 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    double beta = 0.12;
+    double beta = 0.2;
     Floorplanner* fp = new Floorplanner(alpha, beta, input_blk, input_net);
     fp->floorplan();
-
     return 0;
 }

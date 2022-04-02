@@ -7,6 +7,7 @@
 #include "module.h"
 
 typedef pair<pair<int, int>, int> Interval;
+enum {L, R, P, SWAP, ROTATE, DEL_INS, ROOT};
 
 class Node 
 {
@@ -22,11 +23,12 @@ public:
     int getArea()       { return getWidth() * getHeight(); }
     int getx()          { return _x; }
     int gety()          { return _y; }
+    Node* get_l()       { return _l; }
+    Node* get_r()       { return _r; }
     Block* getBlk()     { return _blk; }
-    double getAspRatio()   { return  (double)getHeight()/(double)getWidth(); }
+    string getName()    { return _blk->getName(); }
     void setx(int x)    { _x = x; _blk->setx(x, x + _blk->getWidth()); }
     void sety(int y)    { _y = y; _blk->sety(y, y + _blk->getHeight()); }
-    string getName()    { return _blk->getName(); }
 private:
     int     _x, _y;
     Node    *_l, *_r, *_p;
@@ -35,7 +37,6 @@ private:
 
 struct Info {
 public:
-    enum {L, R, P, SWAP, ROTATE, DEL_INS, ROOT};
     Info(Node* node, short op, Block* blk = NULL, short pntDir = 0, Node* pntNode = NULL) :
     _node(node), _op(op), _blk(blk), _pntDir(pntDir), _pntNode(pntNode) {}
 public:
@@ -75,11 +76,11 @@ public:
     void reset();
     void printTree(Node*);
     void insertNode(Node*, Node*);
-    Node* deleteNode(Node*);
     void computeCoord_dfs(Node*, int);
     void computeCoord_bfs();
     void recover();
     void clearRecover() { _rec.clear(); }
+    Node* deleteNode(Node*);
 
     /* Perturbation */
     void op_swap2nodes();

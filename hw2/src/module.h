@@ -1,6 +1,5 @@
 #ifndef MODULE_H
 #define MODULE_H
-
 #include <vector>
 #include <string>
 #include <climits>
@@ -39,7 +38,6 @@ protected:
     size_t      _y2;        // max y coordinate of the terminal
 };
 
-
 class Block : public Terminal
 {
 public:
@@ -58,26 +56,32 @@ public:
     int getfy1() {return _fy1;}
     int getfx2() {return _fx2;}
     int getfy2() {return _fy2;}
+    double getfmx() {return (_fx1+_fx2)/2.0;}
+    double getfmy() {return (_fy1+_fy2)/2.0;}
+    Block* getFL()  {return _fl;}
+    Block* getFR()  {return _fr;}
 
     // set functions
     void setFinalPos(int x1, int y1, int x2, int y2)    {_fx1=x1; _fy1=y1; _fx2=x2; _fy2=y2;}
-    inline void setWidth(int w)         { _w = w; }
-    inline void setHeight(int h)        { _h = h; }
+    inline void setWidth(int w)            { _w = w; }
+    inline void setHeight(int h)           { _h = h; }
     inline static void setMaxX(size_t x)   { _maxX = x; }
     inline static void setMaxY(size_t y)   { _maxY = y; }
+    void setFL(Block* b)    {_fl = b;}
+    void setFR(Block* b)    {_fr = b;}
 
     inline void rotate()    {std::swap(this->_w, this->_h);}
-
-
 private:
     int             _w;         // width of the block
     int             _h;         // height of the block
-    int             _fx1;        // final lower-left x
-    int             _fy1;        // final lower-left y
-    int             _fx2;        // final lower-left x
-    int             _fy2;        // final lower-left y
     static size_t   _maxX;      // maximum x coordinate for all blocks
     static size_t   _maxY;      // maximum y coordinate for all blocks
+    /* result info. */
+    int             _fx1;        // final lower-left x
+    int             _fy1;        // final lower-left y
+    int             _fx2;        // final upper-right x
+    int             _fy2;        // final upper-right y
+    Block           *_fl, *_fr;  // final left and right child of each block
 };
 
 
@@ -117,5 +121,4 @@ inline double Net::calcHPWL()
     }
     return (maxX - minX) + (maxY - minY);
 }
-
 #endif  // MODULE_H
