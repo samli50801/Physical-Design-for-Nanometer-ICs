@@ -11,31 +11,23 @@ class Terminal
 public:
     // constructor and destructor
     Terminal(string& name, size_t x, size_t y) :
-        _name(name), _x1(x), _y1(y), _x2(x), _y2(y) { }
+        _name(name), _x(x), _y(y) { }
     ~Terminal()  { }
 
     // basic access methods
     const string getName()  { return _name; }
-    const size_t getX1()    { return _x1; }
-    const size_t getX2()    { return _x2; }
-    const size_t getY1()    { return _y1; }
-    const size_t getY2()    { return _y2; }
+    const double getX()    { return _x; }
+    const double getY()    { return _y; }
 
     // set functions
     void setName(string& name) { _name = name; }
-    void setx(int x1, int x2)  { _x1 = x1; _x2 = x2; }
-    void sety(int y1, int y2)  { _y1 = y1; _y2 = y2; }
-    void setPos(size_t x1, size_t y1, size_t x2, size_t y2) {
-        _x1 = x1;   _y1 = y1;
-        _x2 = x2;   _y2 = y2;
-    }
-
+    void setx(double x)  { _x = x; }
+    void sety(double y)  { _y = y; }
+    
 protected:
     string      _name;      // module name
-    size_t      _x1;        // min x coordinate of the terminal
-    size_t      _y1;        // min y coordinate of the terminal
-    size_t      _x2;        // max x coordinate of the terminal
-    size_t      _y2;        // max y coordinate of the terminal
+    double      _x;        // center x coordinate of the terminal
+    double      _y;        // center y coordinate of the terminal
 };
 
 class Block : public Terminal
@@ -84,23 +76,19 @@ private:
     Block           *_fl, *_fr;  // final left and right child of each block
 };
 
-
 class Net
 {
 public:
-    // constructor and destructor
     Net(int netDegree) : _netDegree(netDegree) { 
         _termList.resize(netDegree);
     }
     ~Net()  { }
-
     // basic access methods
     inline vector<Terminal*>& getTermList()   { return _termList; }
     inline int getNetDegree()                 { return _netDegree; }
 
     // other member functions
     inline double calcHPWL();
-
 private:
     int                 _netDegree;
     vector<Terminal*>   _termList;  // list of terminals the net is connected to
@@ -108,16 +96,13 @@ private:
 
 inline double Net::calcHPWL()
 {
-    double minX = INT_MAX, minY = INT_MAX;
-    double maxX = INT_MIN, maxY = INT_MIN;
-    double midX, midY;
+   	double minX = INT_MAX, minY = INT_MAX;
+   	double maxX = INT_MIN, maxY = INT_MIN;
     for (size_t i = 0; i < _netDegree; ++i) {
-        midX = (double)(_termList[i]->getX1()+_termList[i]->getX2()) / 2.0;
-        midY = (double)(_termList[i]->getY1()+_termList[i]->getY2()) / 2.0;
-        minX = std::min(minX, midX);
-        minY = std::min(minY, midY);
-        maxX = std::max(maxX, midX);
-        maxY = std::max(maxY, midY);
+       	minX = std::min(minX, _termList[i]->getX());
+        minY = std::min(minY, _termList[i]->getY());
+        maxX = std::max(maxX, _termList[i]->getX());
+       	maxY = std::max(maxY, _termList[i]->getY());
     }
     return (maxX - minX) + (maxY - minY);
 }
