@@ -4,6 +4,7 @@
 #include <iostream>
 #include <random>
 #include <list>
+#include <tuple>
 #include "module.h"
 
 typedef pair<pair<int, int>, int> Interval;
@@ -12,7 +13,6 @@ enum {L, R, P, SWAP, ROTATE, DEL_INS, ROOT};
 class Node 
 {
     friend class B_Tree;
-    friend struct Info;
 public:
     Node() {}
     Node(Block* blk) : _blk(blk), _l(NULL), _r(NULL), _p(NULL) {}
@@ -27,35 +27,26 @@ public:
     Node* get_r()       { return _r; }
     Block* getBlk()     { return _blk; }
     string getName()    { return _blk->getName(); }
-    void setx(int x)    { _x = x; _blk->setx(x, x + _blk->getWidth()); }
-    void sety(int y)    { _y = y; _blk->sety(y, y + _blk->getHeight()); }
+    void setx(int x)    { _x = x; _blk->setx((2*x+_blk->getWidth())/2.0); }
+    void sety(int y)    { _y = y; _blk->sety((2*y+_blk->getHeight())/2.0); }
 private:
     int     _x, _y;
     Node    *_l, *_r, *_p;
     Block*  _blk;
 };
 
-struct Info {
-public:
-    Info(Node* node, short op, Block* blk = NULL, short pntDir = 0, Node* pntNode = NULL) :
-    _node(node), _op(op), _blk(blk), _pntDir(pntDir), _pntNode(pntNode) {}
-public:
-    Node *_node, *_pntNode;
-    short _op, _pntDir;
-    Block* _blk;
-};
-
+typedef tuple<short, Node*, Block*, short, Node*> Info;
 class B_Tree 
 {
 public:
     B_Tree(vector<Block*>& blkArray, int outlineW, int outlineH) : 
-    _blkArray(blkArray), _nodeNum(blkArray.size()), _outlineW(outlineW), _outlineH(outlineH) {
+    _nodeNum(blkArray.size()), _outlineW(outlineW), _outlineH(outlineH) {
         srand(time(NULL));
         _nodeArray.resize(blkArray.size());
         for (size_t i = 0, i_end = blkArray.size(); i < i_end; ++i) 
             _nodeArray[i] = new Node(blkArray[i]);
         std::sort(_nodeArray.begin(), _nodeArray.end(), 
-        [](Node* a, Node* b) { return a->getArea() > b->getArea(); });
+        [](Node* a, Node* b) {return a->getArea() > b->getArea();});
         
         _ctl.push_front({{0, INT_MAX}, 0});
         _boundingBox.first = _boundingBox.second = 0;
@@ -78,14 +69,16 @@ public:
     void insertNode(Node*, Node*);
     void computeCoord_dfs(Node*, int);
     void computeCoord_bfs();
-    void recover();
-    void clearRecover() { _rec.clear(); }
     Node* deleteNode(Node*);
 
     /* Perturbation */
     void op_swap2nodes();
     void op_rotate();
     void op_deleteAndInsert();
+
+    /* recover operation */
+    void recover();
+    void clearRecover() { _rec.clear(); }
 
     /* draw */
     void plotContourLine(fstream&, int&);
@@ -97,7 +90,6 @@ private:
     pair<int, int>  _boundingBox;   // record maximum x/y coord.
     Node*           _root;          // root of B* tree
     vector<Node*>   _nodeArray;     // node array of B* tree
-    const vector<Block*>&           _blkArray;
     list<Interval>  _ctl;           // contour line
     list<Info>      _rec;           // record changes and recover to previous tree
 };

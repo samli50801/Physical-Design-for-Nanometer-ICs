@@ -44,41 +44,40 @@ Node* B_Tree::deleteNode(Node* delNode)
     /* delete */
     if (delNode->_l == NULL && delNode->_r == NULL) {         // delete leaf node
         if (delNode->_p->_l == delNode) {
-            _rec.push_front(Info(delNode->_p, DEL_INS, NULL, L, delNode->_p->_l));
+            _rec.push_front(Info(DEL_INS, delNode->_p, NULL, L, delNode->_p->_l));
             delNode->_p->_l = NULL;
         }
         else {
-            _rec.push_front(Info(delNode->_p, DEL_INS, NULL, R, delNode->_p->_r));
+            _rec.push_front(Info(DEL_INS, delNode->_p, NULL, R, delNode->_p->_r));
             delNode->_p->_r = NULL;
         }
-        _rec.push_front(Info(delNode, DEL_INS, NULL, P, delNode->_p));
+        _rec.push_front(Info(DEL_INS, delNode, NULL, P, delNode->_p));
         delNode->_p = NULL;
-    } else if (delNode->_l == NULL || delNode->_r == NULL) {  // delete one child node
+    }else if (delNode->_l == NULL || delNode->_r == NULL) {  // delete one child node
         Node *childOfDelete = (delNode->_l == NULL) ? delNode->_r : delNode->_l;
         if (delNode == _root) {
-            _rec.push_front(Info(_root, ROOT, NULL, 0, NULL));
+            _rec.push_front(Info(ROOT, _root, NULL, 0, NULL));
             _root = childOfDelete;
         }
         else if (delNode->_p->_l == delNode) {
-            _rec.push_front(Info(delNode->_p, DEL_INS, NULL, L, delNode->_p->_l));
+            _rec.push_front(Info(DEL_INS, delNode->_p, NULL, L, delNode->_p->_l));
             delNode->_p->_l = childOfDelete;
         }
         else {
-            _rec.push_front(Info(delNode->_p, DEL_INS, NULL, R, delNode->_p->_r));
+            _rec.push_front(Info(DEL_INS, delNode->_p, NULL, R, delNode->_p->_r));
             delNode->_p->_r = childOfDelete;
         }
-        _rec.push_front(Info(childOfDelete, DEL_INS, NULL, P, childOfDelete->_p));
+        _rec.push_front(Info(DEL_INS, childOfDelete, NULL, P, childOfDelete->_p));
         childOfDelete->_p = delNode->_p;
-        _rec.push_front(Info(delNode, DEL_INS, NULL, P, delNode->_p));
-        _rec.push_front(Info(delNode, DEL_INS, NULL, L, delNode->_l));
-        _rec.push_front(Info(delNode, DEL_INS, NULL, R, delNode->_r));
+        _rec.push_front(Info(DEL_INS, delNode, NULL, P, delNode->_p));
+        _rec.push_front(Info(DEL_INS, delNode, NULL, L, delNode->_l));
+        _rec.push_front(Info(DEL_INS, delNode, NULL, R, delNode->_r));
         delNode->_p = NULL;
         delNode->_l = NULL;
         delNode->_r = NULL;
-    } else {                                                   // delete two child node
+    }else {                                                   // delete two child node
         Node* replace = rand()%2 ? delNode->_r : delNode->_l;
-        _rec.push_front(Info(delNode, SWAP, delNode->_blk));
-        _rec.push_front(Info(replace, SWAP, replace->_blk));
+        _rec.push_front(Info(SWAP, delNode, NULL, 0, replace));
         std::swap(delNode->_blk, replace->_blk);
         return deleteNode(replace);
     }
@@ -90,35 +89,35 @@ inline void B_Tree::insertNode(Node* node, Node* root)
     if (rand() % 2) {
         if (root->_l != NULL) {
             if (rand() % 2) {
-                _rec.push_front(Info(node, DEL_INS, NULL, L, node->_l));
+                _rec.push_front(Info(DEL_INS, node, NULL, L, node->_l));
                 node->_l = root->_l;
             }
             else {
-                _rec.push_front(Info(node, DEL_INS, NULL, R, node->_r));
+                _rec.push_front(Info(DEL_INS, node, NULL, R, node->_r));
                 node->_r = root->_l;
             }
-            _rec.push_front(Info(root->_l, DEL_INS, NULL, P, root->_l->_p));
+            _rec.push_front(Info(DEL_INS, root->_l, NULL, P, root->_l->_p));
             root->_l->_p = node;
         }
-        _rec.push_front(Info(root, DEL_INS, NULL, L, root->_l));
+        _rec.push_front(Info(DEL_INS, root, NULL, L, root->_l));
         root->_l = node;
     } else {
         if (root->_r != NULL) {
             if (rand() % 2) {
-                _rec.push_front(Info(node, DEL_INS, NULL, L, node->_l));
+                _rec.push_front(Info(DEL_INS, node, NULL, L, node->_l));
                 node->_l = root->_r;
             }
             else {
-                _rec.push_front(Info(node, DEL_INS, NULL, R, node->_r));
+                _rec.push_front(Info(DEL_INS, node, NULL, R, node->_r));
                 node->_r = root->_r;
             }
-            _rec.push_front(Info(root->_r, DEL_INS, NULL, P, root->_r->_p));
+            _rec.push_front(Info(DEL_INS, root->_r, NULL, P, root->_r->_p));
             root->_r->_p = node;
         }
-        _rec.push_front(Info(root, DEL_INS, NULL, R, root->_r));
+        _rec.push_front(Info(DEL_INS, root, NULL, R, root->_r));
         root->_r = node;
     }
-    _rec.push_front(Info(node, DEL_INS, NULL, P, node->_p));
+    _rec.push_front(Info(DEL_INS, node, NULL, P, node->_p));
     node->_p = root;
 }
 
@@ -130,15 +129,14 @@ void B_Tree::op_swap2nodes()
         node1 = _nodeArray[rand() % _nodeNum];
         node2 = _nodeArray[rand() % _nodeNum];
     } while (node1 == node2);
-    _rec.push_front(Info(node1, SWAP, node1->_blk));
-    _rec.push_front(Info(node2, SWAP, node2->_blk));
+    _rec.push_front(Info(SWAP, node1, NULL, 0, node2));
     std::swap(node1->_blk, node2->_blk);
 }
 
 void B_Tree::op_rotate()
 {
     Node* node = _nodeArray[rand() % _nodeNum];
-    _rec.push_front(Info(NULL, ROTATE, node->_blk, 0, NULL));
+    _rec.push_front(Info(ROTATE, NULL, node->_blk, 0, NULL));
     node->_blk->rotate();
 }
 
@@ -253,20 +251,20 @@ void B_Tree::recover()
 {
     while (!_rec.empty()) {
         Info it = _rec.front();
-        switch (it._op) {
+        switch (get<0>(it)) {
         case SWAP:
-            it._node->_blk = it._blk;
+            std::swap(get<1>(it)->_blk, get<4>(it)->_blk);
             break;
         case ROTATE:
-            it._blk->rotate();
+            get<2>(it)->rotate();
             break;
         case DEL_INS:
-            if (it._pntDir == L) it._node->_l = it._pntNode; else
-            if (it._pntDir == R) it._node->_r = it._pntNode; else
-            if (it._pntDir == P) it._node->_p = it._pntNode;
+            if (get<3>(it)==L) get<1>(it)->_l = get<4>(it); else
+            if (get<3>(it)==R) get<1>(it)->_r = get<4>(it); else
+            if (get<3>(it)==P) get<1>(it)->_p = get<4>(it);
             break;
         case ROOT:
-            _root = it._node;
+            _root = get<1>(it);
             break;
         }
         _rec.pop_front();
