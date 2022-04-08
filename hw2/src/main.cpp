@@ -2,11 +2,14 @@
 #include <fstream>
 #include <vector>
 #include <bitset>
+#include <time.h>
 #include "floorplanner.h"
 using namespace std;
 
 int main(int argc, char** argv)
 {
+    clock_t tStart = clock();
+
     fstream input_blk, input_net, output;
     double alpha;
 
@@ -37,8 +40,9 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    double beta = 0.2;
-    Floorplanner* fp = new Floorplanner(alpha, beta, input_blk, input_net);
+    Floorplanner* fp = new Floorplanner(alpha, input_blk, input_net);
     fp->floorplan();
+    double tEnd = (double)(clock() - tStart)/CLOCKS_PER_SEC;
+    fp->writeOutputFile(tEnd);
     return 0;
 }
