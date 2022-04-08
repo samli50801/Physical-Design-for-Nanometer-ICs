@@ -12,8 +12,8 @@ using namespace std;
 class Floorplanner 
 {
 public:
-    Floorplanner(double alpha, double beta, fstream& input_blk, fstream& input_net) : 
-    _alpha(alpha), _beta(1.0-alpha), _gamma(1.0-alpha), _wlNorm(0), _areaNorm(0), _aspRatioNorm(0) 
+    Floorplanner(double alpha, fstream& input_blk, fstream& input_net) : 
+    _alpha(alpha), _beta(1-alpha), _gamma(1-alpha), _wlNorm(0), _areaNorm(0), _aspRatioNorm(0) 
     {
         parseInput(input_blk, input_net);
         _bt = new B_Tree(_blkArray, _outlineWidth, _outlineHeight);
@@ -25,7 +25,7 @@ public:
     void calcCost(int&, int&);
     void recordBest();
     void floorplan();
-
+    void writeOutputFile(double runtime);
     void plot(bool);
 
 private:
@@ -37,6 +37,7 @@ private:
     int                     _termNum;               // total number of terminal
     double                  _dsrAspRatio;           // aspect ratio of fixed-outline
     double                  _bestArea, _bestWL;     // the best area and wirelength of floorplan
+    double                  _bestWidth, _bestHeight;// the best width and height of floorplan
     double                  _wlCost;                // current wirelength cost
     double                  _areaCost;              // current area cost
     double                  _aspRatioCost;          // current aspect ratio cost

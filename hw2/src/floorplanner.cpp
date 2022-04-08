@@ -9,13 +9,10 @@ Floorplanner::parseInput(fstream& input_blk, fstream& input_net)
     string str;
     int val1, val2;
     /* input file: block */
-    // Outline
-    input_blk >> str >> _outlineWidth >> _outlineHeight;
-    // NumBlocks
-    input_blk >> str >> _blkNum;
+    input_blk >> str >> _outlineWidth >> _outlineHeight;    // Outline
+    input_blk >> str >> _blkNum;                            // NumBlocks
     _blkArray.resize(_blkNum);
-    // NumTerminals
-    input_blk >> str >> _termNum;
+    input_blk >> str >> _termNum;                           // NumTerminals
     // Block info
     for (size_t i = 0; i < _blkNum; ++i) {
         input_blk >> str >> val1 >> val2;
@@ -23,8 +20,8 @@ Floorplanner::parseInput(fstream& input_blk, fstream& input_net)
         _blkArray[i] = block;
         _name2Term[str] = block;
     }
-    // Terminal info
-    string buffer;  // "terminal"
+    /* Terminal info */
+    string buffer;                      // "terminal"   
     for (size_t i = 0; i < _termNum; ++i) {
         input_blk >> str >> buffer >> val1 >> val2;
         _name2Term[str] = new Terminal(str, val1, val2);;
@@ -33,7 +30,7 @@ Floorplanner::parseInput(fstream& input_blk, fstream& input_net)
     input_net >> str >> _netNum;
     _netArray.resize(_netNum);
     for (size_t i = 0; i < _netNum; ++i) {
-        input_net >> str >> val1;   // NetDegree
+        input_net >> str >> val1;       // NetDegree
         Net *net = new Net(val1);
         for (size_t j = 0; j < val1; ++j) {
             input_net >> str;
@@ -48,10 +45,8 @@ Floorplanner::calcCost(int& bdWidth, int& bdHeight)
 {
     bdWidth = _bt->get_bd_box().first;
     bdHeight = _bt->get_bd_box().second;
-    double w = bdWidth;
-    double h = bdHeight;
-    _areaCost = (double)w*h;
-    _aspRatioCost = abs((_dsrAspRatio - (h/w)));
+    _areaCost = (double)bdWidth*bdHeight;
+    _aspRatioCost = std::pow((_dsrAspRatio - ((double)bdHeight/bdWidth)), 2);
     _wlCost = 0.0;
     for (auto it : _netArray) 
         _wlCost += it->calcHPWL();
@@ -81,7 +76,7 @@ Floorplanner::floorplan()
     int N = 100*_blkNum;   // user-defined number for inner loop
     int bdWidth, bdHeight;  
     double T;
-    double r = 0.95;       // cool down parameter
+    double r = 0.93;       // cool down parameter
     int rej = 0, uphill = 0, MT = 0;
     double prevCost, currCost, bestCost, deltaCost, avgDelta = 0;
 
@@ -98,17 +93,10 @@ Floorplanner::floorplan()
             _areaNorm += _areaCost/(double)m;
             _wlNorm += _wlCost/(double)m;
             _aspRatioNorm += _aspRatioCost/(double)m;
-            if (i == m-1) {
-                //prevCost = _alpha*(_areaCost/_areaNorm) + _beta*(_wlCost/_wlNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
-                prevCost = _alpha*(_areaCost/_areaNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
-                bestCost = prevCost;
-                recordBest();
-                _bestArea = _areaCost;
-                _bestWL = _wlCost;
-            }
+            if (i == m-1) 
+                prevCost = _alpha*(_areaCost/_areaNorm) + 0*(_wlCost/_wlNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
         } else {
-            //currCost = _alpha*(_areaCost/_areaNorm) + _beta*(_wlCost/_wlNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
-            currCost = _alpha*(_areaCost/_areaNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
+            currCost = _alpha*(_areaCost/_areaNorm) + 0*(_wlCost/_wlNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
             deltaCost = abs(currCost - prevCost);
             avgDelta += deltaCost/(double)m;
             prevCost = currCost;
@@ -116,12 +104,12 @@ Floorplanner::floorplan()
     }
     _bt->clearRecover();
     T = abs(avgDelta/log(0.99));
-    cout << T << endl;
     /********************************************************
     // Run Simulated Annealing
     *********************************************************/
     int outerCount = 0, innerCount = 0;
     int num[3] = {0};
+    bestCost = INT_MAX;
     do {
         MT = rej = uphill = 0;
         do {
@@ -133,19 +121,20 @@ Floorplanner::floorplan()
             _bt->computeCoord_dfs(_bt->getRoot(), 0);
             //_bt->computeCoord_bfs(); 
             calcCost(bdWidth, bdHeight);
-            //currCost = _alpha*(_areaCost/_areaNorm) + _beta*(_wlCost/_wlNorm) + _gamma*(_aspRatioCost/_aspRatioNorm); //_beta*(_wlCost/_wlNorm) 
-            currCost = _alpha*(_areaCost/_areaNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
+            currCost = _alpha*(_areaCost/_areaNorm) + 0*(_wlCost/_wlNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
             deltaCost = currCost - prevCost;
             // Accept the neighbor
             if (deltaCost<=0 || (double)rand()/(RAND_MAX+1.0) < exp(-deltaCost/T)) {
                 if (deltaCost>0) ++uphill;
-                if (_alpha*(_areaCost)+_beta*(_wlCost) <= _alpha*(_bestArea)+_beta*(_bestWL) 
-                && bdWidth<=_outlineWidth && bdHeight<=_outlineHeight) { //currCost<=bestCost
+                if (_alpha*(_areaCost)+_beta*(_wlCost) <= bestCost
+                && bdWidth<=_outlineWidth && bdHeight<=_outlineHeight) { //currCost<=bestCost 
                     ++num[OP];
                     recordBest();
-                    bestCost = currCost;
+                    bestCost = _alpha*(_areaCost)+_beta*(_wlCost);
                     _bestArea = _areaCost;
                     _bestWL = _wlCost;
+                    _bestWidth = bdWidth;
+                    _bestHeight = bdHeight;
                 }
                 prevCost = currCost;
                 _bt->clearRecover();
@@ -160,8 +149,8 @@ Floorplanner::floorplan()
         ++outerCount;
         innerCount = 0;
     } while ((double)rej/MT < 0.95 && T > 0.00001);
-
-    cout << "bestCost: " << _alpha*(_bestArea)+_beta*(_bestWL) << endl;
+    cout << "AREA: " << _bestArea << " WL: " << _bestWL << endl;
+    cout << "bestCost: " << 0.5*(_bestArea)+0.5*(_bestWL) << endl;
     cout << num[0] << " " << num[1] << " " << num[2] << endl;
     plot(BEST_FLOORPLAN);
 }
@@ -231,4 +220,17 @@ void Floorplanner::plot(bool type)
 	outgraph << "exit";
 	outgraph.close();
 	int gnuplot = system("gnuplot floorplan.gp");
+}
+
+void Floorplanner::writeOutputFile(double runtime)
+{
+    fstream file;
+    file.open("output.rpt", ios::out);
+    file << std::fixed << _alpha*_bestArea + _beta*_bestWL << endl;
+    file << std::fixed << _bestWL << endl;
+    file << std::fixed << _bestArea << endl;
+    file << _bestWidth << ' ' << _bestHeight << endl;
+    file << runtime << endl;
+    for (auto& it : _blkArray) 
+        file << it->getName() << '\t' << it->getfx1() << '\t' << it->getfy1() << '\t' << it->getfx2() << '\t' << it->getfy2() << endl;
 }
