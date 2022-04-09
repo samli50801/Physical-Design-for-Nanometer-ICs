@@ -1,6 +1,5 @@
 #ifndef FLOORPLANNER_H
 #define FLOORPLANNER_H
-
 #include <iostream>
 #include <fstream>
 #include <string>

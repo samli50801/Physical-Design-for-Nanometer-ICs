@@ -87,7 +87,6 @@ Floorplanner::floorplan()
         if (OP == 2)    _bt->op_deleteAndInsert();
         _bt->reset();
         _bt->computeCoord_dfs(_bt->getRoot(), 0);
-        //_bt->computeCoord_bfs(); 
         calcCost(bdWidth, bdHeight);
         if (i < m) {
             _areaNorm += _areaCost/(double)m;
@@ -119,7 +118,6 @@ Floorplanner::floorplan()
             if (OP == 2)    _bt->op_deleteAndInsert();
             _bt->reset();
             _bt->computeCoord_dfs(_bt->getRoot(), 0);
-            //_bt->computeCoord_bfs(); 
             calcCost(bdWidth, bdHeight);
             currCost = _alpha*(_areaCost/_areaNorm) + 0*(_wlCost/_wlNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
             deltaCost = currCost - prevCost;
@@ -127,7 +125,7 @@ Floorplanner::floorplan()
             if (deltaCost<=0 || (double)rand()/(RAND_MAX+1.0) < exp(-deltaCost/T)) {
                 if (deltaCost>0) ++uphill;
                 if (_alpha*(_areaCost)+_beta*(_wlCost) <= bestCost
-                && bdWidth<=_outlineWidth && bdHeight<=_outlineHeight) { //currCost<=bestCost 
+                && bdWidth<=_outlineWidth && bdHeight<=_outlineHeight) {
                     ++num[OP];
                     recordBest();
                     bestCost = _alpha*(_areaCost)+_beta*(_wlCost);
@@ -160,10 +158,11 @@ void Floorplanner::plot(bool type)
     //gnuplot preset
 	fstream outgraph("./floorplan.gp", ios::out);
 	outgraph << "reset\n";
+    outgraph << "set terminal png\n";
+    outgraph << "set output \"floorplan.png\"\n";
 	outgraph << "set tics\n";
 	outgraph << "unset key\n";
 	outgraph << "set title \"The result of FloorPlanning\"\n";
-	//outgraph << "set size " << 1 << ", " << 1 << "\n";
     outgraph << "set size noratio" << "\n";
     int screen_left = -_outlineWidth*0.1;
     int screen_right = _outlineWidth*1.1;
@@ -211,12 +210,10 @@ void Floorplanner::plot(bool type)
 			<< 0 << "," << _outlineHeight << " to " << 0 << "," << 0 << " nohead lc rgb \'yellow\'\n";
     outgraph << "set style line 1 lc rgb \"red\" lw 3\n";
 	outgraph << "set border ls 1\n";
-	outgraph << "set terminal png\n";
-	outgraph << "set output \"floorplan.png\"\n";
 	outgraph << "plot [" << screen_left << ":" << screen_right << "]["
 		     << screen_down << ":" << screen_up << "]\'line\' w l lt 2 lw 1\n";
 	outgraph << "set terminal x11 persist\n";
-	outgraph << "replot\n";
+	//outgraph << "replot\n";
 	outgraph << "exit";
 	outgraph.close();
 	int gnuplot = system("gnuplot floorplan.gp");
