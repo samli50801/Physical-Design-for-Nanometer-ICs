@@ -8,6 +8,9 @@
 #include "btree.h"
 using namespace std;
 
+#define CURRENT_FLOORPLAN   0
+#define BEST_FLOORPLAN      1
+
 class Floorplanner 
 {
 public:

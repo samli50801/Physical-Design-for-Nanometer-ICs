@@ -1,6 +1,4 @@
 #include "floorplanner.h"
-#define CURRENT_FLOORPLAN   0
-#define BEST_FLOORPLAN      1
 using namespace std;
 
 void 
@@ -73,7 +71,7 @@ Floorplanner::floorplan()
     *********************************************************/
     short OP;
     size_t m = 2*(_blkNum + _netNum);
-    int N = 100*_blkNum;   // user-defined number for inner loop
+    int N = _blkNum < 500 ? 100*_blkNum : 80*_blkNum;   // user-defined number for inner loop
     int bdWidth, bdHeight;  
     double T;
     double r = 0.93;       // cool down parameter
@@ -96,17 +94,18 @@ Floorplanner::floorplan()
                 prevCost = _alpha*(_areaCost/_areaNorm) + 0*(_wlCost/_wlNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
         } else {
             currCost = _alpha*(_areaCost/_areaNorm) + 0*(_wlCost/_wlNorm) + _gamma*(_aspRatioCost/_aspRatioNorm);
-            deltaCost = abs(currCost - prevCost);
+            double tDeltaCost = currCost - prevCost;
+            deltaCost = std::abs(tDeltaCost);
             avgDelta += deltaCost/(double)m;
             prevCost = currCost;
         }
     }
     _bt->clearRecover();
-    T = abs(avgDelta/log(0.99));
+    double tTemp = avgDelta/log(0.99);
+    T = std::abs(tTemp);
     /********************************************************
     // Run Simulated Annealing
     *********************************************************/
-    int outerCount = 0, innerCount = 0;
     int num[3] = {0};
     bestCost = INT_MAX;
     do {
@@ -141,16 +140,12 @@ Floorplanner::floorplan()
                 ++rej;
             }
             ++MT;
-            innerCount++;
         } while (uphill <= N && MT <= 2*N);
         T*=r;
-        ++outerCount;
-        innerCount = 0;
     } while ((double)rej/MT < 0.95 && T > 0.00001);
     cout << "AREA: " << _bestArea << " WL: " << _bestWL << endl;
     cout << "bestCost: " << 0.5*(_bestArea)+0.5*(_bestWL) << endl;
-    cout << num[0] << " " << num[1] << " " << num[2] << endl;
-    plot(BEST_FLOORPLAN);
+    //cout << num[0] << " " << num[1] << " " << num[2] << endl;
 }
 
 void Floorplanner::plot(bool type)

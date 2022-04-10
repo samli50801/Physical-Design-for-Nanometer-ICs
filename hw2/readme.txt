@@ -18,10 +18,11 @@
 
 	(1) Put the input file (ex: .block and .nets files) in input_pa2/
 	(2) Go to the current dictionary (same path with readme.txt)
-	(3) $ make
-	(4) Executable file named "fp" will be generated in the current dictionary
-	(5) $ ./fp <α value> <input.block name> <input.net name> <output file name>
-	   (EX: ./fp 0.5 ami49.block ami49.nets output.rpt)
+	(3) $ make clean
+	(4) $ make
+	(5) Executable file named "fp" will be generated in the current dictionary
+	(6) $ ./fp <α value> <input.block name> <input.net name> <output file name> (ex: ./fp 0.5 ami49.block ami49.nets output.rpt)
+	(7) If GNUplot has been installed, however, the program still cannot run successfully, please delete "fp->plot(BEST_FLOORPLAN);" in src/main.cpp:47, and then go back to step4.
 
 6. Result:
 	(1) The output file named "output.rpt" will be generated in the current dictionary, and the content is like:

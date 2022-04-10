@@ -44,5 +44,6 @@ int main(int argc, char** argv)
     fp->floorplan();
     double tEnd = (double)(clock() - tStart)/CLOCKS_PER_SEC;
     fp->writeOutputFile(tEnd);
+    fp->plot(BEST_FLOORPLAN);
     return 0;
 }

@@ -15,4 +15,4 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o $(EXECUTABLE) bin/$(EXECUTABLE)
+	rm -rf *.o $(EXECUTABLE) bin/$(EXECUTABLE) floorplan.gp floorplan.png line output.rpt
