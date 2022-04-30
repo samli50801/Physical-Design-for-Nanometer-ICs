@@ -1,6 +1,7 @@
 #include "GlobalPlacer.h"
 #include "ExampleFunction.h"
 #include "NumericalOptimizer.h"
+#include <float.h>
 
 GlobalPlacer::GlobalPlacer(Placement &placement)
 	:_placement(placement)
@@ -9,18 +10,18 @@ GlobalPlacer::GlobalPlacer(Placement &placement)
 
 void GlobalPlacer::initSolVec(vector<double>& x)
 {
-    srand( time(NULL) );
-    double boundryXCent = (_placement.boundryLeft()+_placement.boundryRight()) / 2.0;
-    double boundryYCent = (_placement.boundryBottom()+_placement.boundryTop()) / 2.0;
+    srand(7);
     unsigned modNum = _placement.numModules();
+    double minX = 0.0;
+    double maxX = _placement.boundryRight() - _placement.boundryLeft();
+    double minY = 0.0;
+    double maxY = _placement.boundryTop() - _placement.boundryBottom();
     for (unsigned i = 0; i < modNum; ++i) {
-        int randX = rand()%((int)abs(_placement.boundryLeft())+(int)abs(_placement.boundryRight()));
-        int randY = rand()%((int)abs(_placement.boundryBottom())+(int)abs(_placement.boundryTop()));
-        /*x[i*2] = (double)randX-abs(_placement.boundryLeft());
-        x[i*2+1] = (double)randY-abs(_placement.boundryBottom());*/
-        x[i*2] = boundryXCent;
-        x[i*2+1] = boundryYCent;
-        _placement.module(i).setCenterPosition(x[i*2], x[i*2+1]);
+        double randX = (maxX - minX) * rand() / (RAND_MAX + 1.0);
+        double randY = (maxY - minY) * rand() / (RAND_MAX + 1.0);
+        _placement.module(i).setCenterPosition(randX, randY);
+        x[2*i] = randX;
+        x[2*i+1] = randY;
     }
 }
 
@@ -36,30 +37,69 @@ void GlobalPlacer::place()
     vector<double> x(moduleNum*2); // solution vector, size: num_blocks*2 
                          // each 2 variables represent the X and Y dimensions of a block
     initSolVec(x);       // initialize the solution vector
-    
     NumericalOptimizer no(ef);
-    no.setStepSizeBound(_placement.boundryWidth() / 10); // user-specified parameter
-    no.setX(x);             // set initial solution
-    no.setNumIteration(20); // user-specified parameter
 
-    for (size_t iter = 0; iter < 11; ++iter) {
-        no.solve();             // Conjugate Gradient solver
-        for (size_t i = 0; i < moduleNum; ++i) {
-            _placement.module(i).setCenterPosition(no.x(2*i), no.x(2*i+1));
-            x[2*i] = _placement.module(i).centerX();
-            x[2*i+1] = _placement.module(i).centerY();
+    double boundW = _placement.boundryRight() - _placement.boundryLeft();
+    double boundH = _placement.boundryTop() - _placement.boundryBottom();
+
+    for (size_t iter = 0; iter < 4; ++iter) {
+        ef.setLambda(iter*5000);
+        if (iter == 0) {
+            no.setX(x);             // set initial solution
+            no.setStepSizeBound(400000);
+            //no.setStepSizeBound((_placement.boundryRight() - _placement.boundryLeft())*7); // user-specified parameter
+            no.setNumIteration(80); // user-specified parameter
+        } else {
+            no.setStepSizeBound(400000);
+            no.setNumIteration(70); // user-specified parameter
         }
-        no.setX(x);
-        ef.increaseLambda();
+        no.solve();             // Conjugate Gradient solver
+        /*for (size_t i = 0; i < moduleNum; ++i) {
+            double centX = no.x(2*i);
+            double centY = no.x(2*i+1);
+            if (centX > boundW) {
+                centX = boundW - 0.5*_placement.module(i).width();
+            } 
+            else if (centX < 0.0) {
+                centX = 0.0 + 0.5*_placement.module(i).width();
+            }
+            if (centY > boundH) {
+                centY = boundH - 0.5*_placement.module(i).height();
+            } 
+            else if (centY < 0.0) {
+                centY = 0.0 + 0.5*_placement.module(i).height();
+            } 
+            x[2*i] = centX;
+            x[2*i+1] = centY;
+        }*/
     }
 
-    cout << "Current solution:" << endl;
+    for (size_t i = 0; i < moduleNum; ++i) {
+        double centX = no.x(2*i);
+        double centY = no.x(2*i+1);
+        if (centX > boundW) {
+            centX = boundW - 0.5*_placement.module(i).width();
+        } 
+        else if (centX < 0.0) {
+            centX = 0.0 + 0.5*_placement.module(i).width();
+        }
+        if (centY > boundH) {
+            centY = boundH - 0.5*_placement.module(i).height();
+        } 
+        else if (centY < 0.0) {
+            centY = 0.0 + 0.5*_placement.module(i).height();
+        } 
+        _placement.module(i).setCenterPosition(centX + _placement.boundryLeft(), centY + _placement.boundryBottom());
+    }
+
+    /*cout << "Current solution:" << endl;
     for (unsigned i = 0; i < no.dimension(); i++) {
         cout << "x[" << i << "] = " << no.x(i) << endl;
-    }
+    }*/
     cout << "Objective: " << no.objective() << endl;
 	////////////////////////////////////////////////////////////////
 }
+
 
 
 void GlobalPlacer::plotPlacementResult( const string outfilename, bool isPrompt )

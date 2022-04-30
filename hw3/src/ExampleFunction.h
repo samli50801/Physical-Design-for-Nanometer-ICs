@@ -13,10 +13,11 @@ public:
     void evaluateFG(const vector<double> &x, double &f, vector<double> &g);
     void evaluateF(const vector<double> &x, double &f);
     void increaseLambda() {_lambda *= 2.0;}
+    void setLambda(double lambda)   {_lambda = lambda;}
     unsigned dimension();
 
-private:
-    Placement   _placement;
+public:
+    Placement&  _placement;
     int         _hBinNum;
     int         _vBinNum;
     double      _binWidth;
@@ -24,5 +25,7 @@ private:
     double      _binDensLimit;     // upper bound of the bin density
     double      _lambda;
     double      _gamma;
+    vector<double>  _modExp;
+    vector<double>  _ovlpDiff;
 };
 #endif // EXAMPLEFUNCTION_H
