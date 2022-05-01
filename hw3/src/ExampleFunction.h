@@ -14,6 +14,7 @@ public:
     void evaluateF(const vector<double> &x, double &f);
     void increaseLambda() {_lambda *= 2.0;}
     void setLambda(double lambda)   {_lambda = lambda;}
+    double calLambda()  { return _HPWLF / _DensF; }
     unsigned dimension();
 
 public:
@@ -25,6 +26,8 @@ public:
     double      _binDensLimit;     // upper bound of the bin density
     double      _lambda;
     double      _gamma;
+    double      _HPWLF;
+    double      _DensF;
     vector<double>  _modExp;
     vector<double>  _ovlpDiff;
 };

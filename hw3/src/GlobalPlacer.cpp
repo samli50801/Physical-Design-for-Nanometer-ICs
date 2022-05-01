@@ -2,6 +2,7 @@
 #include "ExampleFunction.h"
 #include "NumericalOptimizer.h"
 #include <float.h>
+#include <math.h>
 
 GlobalPlacer::GlobalPlacer(Placement &placement)
 	:_placement(placement)
@@ -39,21 +40,29 @@ void GlobalPlacer::place()
     initSolVec(x);       // initialize the solution vector
     NumericalOptimizer no(ef);
 
-    double boundW = _placement.boundryRight() - _placement.boundryLeft();
-    double boundH = _placement.boundryTop() - _placement.boundryBottom();
+    double boundW = _placement.boundryWidth();
+    double boundH = _placement.boundryHeight();
+    double stepSize = (boundW + boundH) * 8.0;
+
+    ef.setLambda(0);
+    no.setX(x);             // set initial solution
+    no.setStepSizeBound(boundW*6); // user-specified parameter
+    no.setNumIteration(100); // user-specified parameter
+    no.solve();             // Conjugate Gradient solver
+
+    ef.setLambda(1.0);
+    no.setNumIteration(1); // user-specified parameter
+    no.solve();             // Conjugate Gradient solver
+    double lambda = ef.calLambda() * 600;
 
     for (size_t iter = 0; iter < 4; ++iter) {
-        ef.setLambda(iter*5000);
-        if (iter == 0) {
-            no.setX(x);             // set initial solution
-            no.setStepSizeBound(400000);
-            //no.setStepSizeBound((_placement.boundryRight() - _placement.boundryLeft())*7); // user-specified parameter
-            no.setNumIteration(80); // user-specified parameter
-        } else {
-            no.setStepSizeBound(400000);
-            no.setNumIteration(70); // user-specified parameter
-        }
-        no.solve();             // Conjugate Gradient solver
+        //ef.setLambda(iter * 300);
+        ef.setLambda(lambda * pow(2, iter));
+        no.setStepSizeBound(stepSize);
+        no.setNumIteration(30); // user-specified parameter
+        stepSize *= 0.9;
+        no.solve();             // Conjugate Gradient solve
+        lambda = ef.calLambda() * 50.0;
         /*for (size_t i = 0; i < moduleNum; ++i) {
             double centX = no.x(2*i);
             double centY = no.x(2*i+1);
@@ -77,16 +86,18 @@ void GlobalPlacer::place()
     for (size_t i = 0; i < moduleNum; ++i) {
         double centX = no.x(2*i);
         double centY = no.x(2*i+1);
-        if (centX > boundW) {
+        double modW = _placement.module(i).width();
+        double modH = _placement.module(i).height();
+        if (centX + 0.5 * modW > boundW) {
             centX = boundW - 0.5*_placement.module(i).width();
         } 
-        else if (centX < 0.0) {
+        else if (centX - 0.5 * modW < 0.0) {
             centX = 0.0 + 0.5*_placement.module(i).width();
         }
-        if (centY > boundH) {
+        if (centY + 0.5 * modW > boundH) {
             centY = boundH - 0.5*_placement.module(i).height();
         } 
-        else if (centY < 0.0) {
+        else if (centY - 0.5 * modW < 0.0) {
             centY = 0.0 + 0.5*_placement.module(i).height();
         } 
         _placement.module(i).setCenterPosition(centX + _placement.boundryLeft(), centY + _placement.boundryBottom());

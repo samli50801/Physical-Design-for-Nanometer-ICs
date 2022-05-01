@@ -9,13 +9,13 @@ ExampleFunction::ExampleFunction(Placement& placement) : _placement(placement)
     double boundryW = _placement.boundryWidth();
     double boundryH = _placement.boundryHeight();
     /* bin info. */
-    _hBinNum = 16; // smaller is better 8
-    _vBinNum = 16;
+    _hBinNum = 14; // 16
+    _vBinNum = 14;
     _binWidth = boundryW/_hBinNum;
     _binHeight = boundryH/_vBinNum;
-    _binDensLimit = 0.0; // bigger is better 0.8
-    for (Module& it : _placement.getModules()) _binDensLimit += it.area();
-    _binDensLimit /= (boundryW*boundryH);
+    _binDensLimit = 0.0; // 0.6
+    for (Module& it : _placement.getModules())
+        _binDensLimit += it.area() / (boundryW*boundryH);
 
     _modExp.resize(_placement.numModules()*4);
     _ovlpDiff.resize(_placement.numModules()*2);
@@ -74,8 +74,8 @@ void ExampleFunction::evaluateFG(const vector<double> &x, double &f, vector<doub
             g[2*modId+1] -= _modExp[4*modId+3] / (sumExp3 * _gamma);
         }
     }
-    double temp = f;
-    cout << "LSE f: " << f << endl;
+    _HPWLF = f;
+    cout << "// LSE f: " << _HPWLF << endl;
 
     if (_lambda == 0) return;
 
@@ -90,7 +90,7 @@ void ExampleFunction::evaluateFG(const vector<double> &x, double &f, vector<doub
     for (size_t i = 0; i < _hBinNum; ++i) {
         for (size_t j = 0; j < _vBinNum; ++j) {
             overlapAreaSum = 0.0;
-            vector<Info> info;
+            //vector<Info> info;
             for (size_t m = 0; m < modNum; ++m) {
                 Module& module = _placement.module(m);
                 double c = module.area() / (_binWidth*_binHeight);
@@ -123,7 +123,6 @@ void ExampleFunction::evaluateFG(const vector<double> &x, double &f, vector<doub
                     //diff_xOverlap = 0;
                 }
                
-
                 //   y-overlap   
                 if (absDy <= module.height()/2.0 + _binHeight) {
                     yOverlap = 1-(alpha[1]*pow(absDy,2));
@@ -155,13 +154,14 @@ void ExampleFunction::evaluateFG(const vector<double> &x, double &f, vector<doub
                 g[2*get<0>(it)+get<1>(it)] += 2.0 * _lambda * (overlapAreaSum-_binDensLimit) * get<2>(it);*/
             for (size_t m = 0; m < modNum; ++m) {
                 g[2*m+0] += 2.0 * _lambda * (overlapAreaSum-_binDensLimit) * _ovlpDiff[2*m + 0];
-                g[2*m+1] += 2.0 * _lambda * (overlapAreaSum-_binDensLimit) * _ovlpDiff[2*m + 1];
+                g[2*m+1] += 3.0 * _lambda * (overlapAreaSum-_binDensLimit) * _ovlpDiff[2*m + 1];
             }
             
         }
     }
 
-    cout << "Overlap f: " << f-temp << endl;
+    _DensF = f-_HPWLF;
+    cout << "// Density: " << _DensF << endl;
 }
 
 void ExampleFunction::evaluateF(const vector<double> &x, double &f)
@@ -206,7 +206,7 @@ void ExampleFunction::evaluateF(const vector<double> &x, double &f)
     }
 
     if (_lambda == 0) return;
-
+    
     /* Bin density: Bell-Shaped function */
     double alpha[2], beta[2];
     double dx, dy, absDx, absDy;
@@ -243,7 +243,6 @@ void ExampleFunction::evaluateF(const vector<double> &x, double &f)
                 else {
                     xOverlap = 0;
                 }
-            
 
                 //   y-overlap   
                 if (absDy <= module.height()/2.0 + _binHeight) {
