@@ -28,6 +28,7 @@ public:
     double      _gamma;
     double      _HPWLF;
     double      _DensF;
+    double      _tuneGy;
     vector<double>  _modExp;
     vector<double>  _ovlpDiff;
 };

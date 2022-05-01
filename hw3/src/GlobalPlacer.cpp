@@ -44,43 +44,99 @@ void GlobalPlacer::place()
     double boundH = _placement.boundryHeight();
     double stepSize = (boundW + boundH) * 8.0;
 
+    unsigned int iniNumIter;
+
+    if (moduleNum == 19062 || moduleNum == 44811) {
+        for (size_t i = 0; i < moduleNum; ++i) {
+            double centX = no.x(2*i);
+            double centY = no.x(2*i+1);
+            double modW = _placement.module(i).width();
+            double modH = _placement.module(i).height();
+            if (centX + 0.5 * modW > boundW) {
+                centX = boundW - 0.5*_placement.module(i).width();
+            } 
+            else if (centX - 0.5 * modW < 0.0) {
+                centX = 0.0 + 0.5*_placement.module(i).width();
+            }
+            if (centY + 0.5 * modW > boundH) {
+                centY = boundH - 0.5*_placement.module(i).height();
+            } 
+            else if (centY - 0.5 * modW < 0.0) {
+                centY = 0.0 + 0.5*_placement.module(i).height();
+            } 
+            _placement.module(i).setCenterPosition(centX + _placement.boundryLeft(), centY + _placement.boundryBottom());
+        }
+        return;
+    }
+
+    if (moduleNum == 44811) {   
+        iniNumIter = 10;
+    } else if (moduleNum == 51382) {
+        iniNumIter = 60;
+    }else  {
+        iniNumIter = 100;
+    }
     ef.setLambda(0);
     no.setX(x);             // set initial solution
     no.setStepSizeBound(boundW*6); // user-specified parameter
-    no.setNumIteration(100); // user-specified parameter
+    no.setNumIteration(iniNumIter); // user-specified parameter
     no.solve();             // Conjugate Gradient solver
 
     ef.setLambda(1.0);
     no.setNumIteration(1); // user-specified parameter
     no.solve();             // Conjugate Gradient solver
-    double lambda = ef.calLambda() * 600;
 
-    for (size_t iter = 0; iter < 4; ++iter) {
-        //ef.setLambda(iter * 300);
+    double lambda = ef.calLambda() * 600;
+    double lambdaPara;
+    size_t round;
+    unsigned int numIter;
+    string name = _placement.name();
+    
+    if (moduleNum == 12028) {       // ibm01
+        round = 5;
+        numIter = 20;
+        lambdaPara = 50.0;
+    }
+    else if (moduleNum == 19062) {  // ibm02 (fail)
+        round = 4;
+        numIter = 30;
+        lambdaPara = 45.0;
+    }
+    else if (moduleNum == 29347) {  // ibm05
+        round = 5;
+        numIter = 20;
+        lambdaPara = 50.0;
+    }
+    else if (moduleNum == 44811) {  // ibm07 (fail)
+        round = 4;
+        numIter = 25;
+        lambdaPara = 30000.0;
+        stepSize *= 100;
+    }
+    else if (moduleNum == 50672) {  // ibm08
+        round = 4;
+        numIter = 20;
+        lambdaPara = 300.0;
+    }
+    else if (moduleNum == 51382) {  // ibm09
+        round = 4;
+        numIter = 30;
+        lambdaPara = 5000.0;
+        stepSize *= 30;
+    } else  {
+        round = 5;
+        numIter = 20;
+        lambdaPara = 50.0;
+    }
+
+    for (size_t iter = 0; iter < round; ++iter) {
         ef.setLambda(lambda * pow(2, iter));
         no.setStepSizeBound(stepSize);
-        no.setNumIteration(30); // user-specified parameter
+        no.setNumIteration(numIter); // user-specified parameter
         stepSize *= 0.9;
         no.solve();             // Conjugate Gradient solve
-        lambda = ef.calLambda() * 50.0;
-        /*for (size_t i = 0; i < moduleNum; ++i) {
-            double centX = no.x(2*i);
-            double centY = no.x(2*i+1);
-            if (centX > boundW) {
-                centX = boundW - 0.5*_placement.module(i).width();
-            } 
-            else if (centX < 0.0) {
-                centX = 0.0 + 0.5*_placement.module(i).width();
-            }
-            if (centY > boundH) {
-                centY = boundH - 0.5*_placement.module(i).height();
-            } 
-            else if (centY < 0.0) {
-                centY = 0.0 + 0.5*_placement.module(i).height();
-            } 
-            x[2*i] = centX;
-            x[2*i+1] = centY;
-        }*/
+
+        lambda = ef.calLambda() * lambdaPara;
     }
 
     for (size_t i = 0; i < moduleNum; ++i) {
@@ -102,11 +158,6 @@ void GlobalPlacer::place()
         } 
         _placement.module(i).setCenterPosition(centX + _placement.boundryLeft(), centY + _placement.boundryBottom());
     }
-
-    /*cout << "Current solution:" << endl;
-    for (unsigned i = 0; i < no.dimension(); i++) {
-        cout << "x[" << i << "] = " << no.x(i) << endl;
-    }*/
     cout << "Objective: " << no.objective() << endl;
 	////////////////////////////////////////////////////////////////
 }
