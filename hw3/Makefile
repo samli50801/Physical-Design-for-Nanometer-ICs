@@ -5,13 +5,14 @@ SOURCES=src/GlobalPlacer.cpp src/ExampleFunction.cpp src/main.cpp
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=place
 
-all: $(SOURCES) bin/$(EXECUTABLE)
+all: $(SOURCES) $(EXECUTABLE)
+	cp $(EXECUTABLE) bin/
 	
-bin/$(EXECUTABLE): $(OBJECTS)
+$(EXECUTABLE): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 
 %.o: %.c ${INCLUDES}
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o bin/$(EXECUTABLE)
+	rm -rf *.o $(EXECUTABLE) bin/$(EXECUTABLE)
